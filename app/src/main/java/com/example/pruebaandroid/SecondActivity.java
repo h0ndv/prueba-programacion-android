@@ -25,6 +25,7 @@ public class SecondActivity extends AppCompatActivity {
     ListView lista;
     ArrayList<String> datos;
     ArrayAdapter<String> listaAdapter;
+    int selectedPosition = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,8 +46,9 @@ public class SecondActivity extends AppCompatActivity {
         lista.setAdapter(listaAdapter);
 
         lista.setOnItemClickListener((parent, view, position, id) -> {
-            String datoActual = datos.get(position);
-            Toast.makeText(SecondActivity.this, "Click indice " + position + " Valor " + datoActual, Toast.LENGTH_LONG).show();
+            selectedPosition = position;
+            String tareaActual = datos.get(position);
+            Toast.makeText(SecondActivity.this, "Tarea seleccionada: " + tareaActual, Toast.LENGTH_SHORT).show();
         });
 
         Button addTask = findViewById(R.id.btnAddTask);
@@ -82,6 +84,27 @@ public class SecondActivity extends AppCompatActivity {
             newTask.setText("");
             newDesc.setText("");
             Toast.makeText(SecondActivity.this, "Tarea agregada", Toast.LENGTH_SHORT).show();
+        });
+
+        // Eliminar tarea
+        Button deleteTask = findViewById(R.id.btnEliminar);
+        deleteTask.setOnClickListener(v -> {
+
+            if (selectedPosition == -1) {
+                Toast.makeText(SecondActivity.this, "No hay tarea seleccionada", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (selectedPosition >= datos.size()) {
+                Toast.makeText(SecondActivity.this, "Posición inválida", Toast.LENGTH_SHORT).show();
+                selectedPosition = -1;
+                return;
+            }
+
+            datos.remove(selectedPosition);
+            listaAdapter.notifyDataSetChanged();
+            selectedPosition = -1;
+            Toast.makeText(SecondActivity.this, "Tarea eliminada", Toast.LENGTH_SHORT).show();
         });
     }
 }
