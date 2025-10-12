@@ -11,44 +11,42 @@
         android:id="@+id/btnAddTask"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
-        android:layout_marginTop="104dp"
-        android:layout_marginEnd="44dp"
-        android:layout_marginBottom="55dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
         android:text="Añadir Tarea"
-        app:layout_constraintBottom_toTopOf="@+id/List"
-        app:layout_constraintEnd_toStartOf="@+id/btnEliminar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+        app:layout_constraintStart_toStartOf="@+id/List"
+        app:layout_constraintTop_toTopOf="@+id/btnEliminar" />
 
     <Button
         android:id="@+id/btnEliminar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="93dp"
-        android:layout_marginTop="94dp"
-        android:layout_marginBottom="55dp"
+        android:layout_marginTop="300dp"
+        android:layout_marginEnd="44dp"
         android:text="Eliminar Tarea"
-        app:layout_constraintBottom_toTopOf="@+id/List"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btnAddTask"
-        app:layout_constraintTop_toBottomOf="@+id/txtNombreTarea" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ListView
         android:id="@+id/List"
-        android:layout_width="350dp"
+        android:layout_width="0dp"
         android:layout_height="250dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginBottom="168dp"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="95dp"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="86dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btnAddTask" />
 
     <TextView
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
         android:layout_marginTop="88dp"
         android:text="Nombre Tarea: "
-        app:layout_constraintEnd_toStartOf="@+id/txtNombreTarea"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -56,15 +54,27 @@
         android:id="@+id/txtNombreTarea"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="35dp"
-        android:layout_marginTop="72dp"
-        android:layout_marginEnd="37dp"
-        android:layout_marginBottom="94dp"
+        android:layout_marginEnd="44dp"
         android:ems="10"
         android:inputType="text"
-        app:layout_constraintBottom_toTopOf="@+id/btnEliminar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/textView3"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toBottomOf="@+id/textView3"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Descripcion"
+        tools:layout_editor_absoluteX="32dp"
+        tools:layout_editor_absoluteY="133dp" />
+
+    <EditText
+        android:id="@+id/txtDescripcion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text"
+        tools:layout_editor_absoluteX="156dp"
+        tools:layout_editor_absoluteY="123dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

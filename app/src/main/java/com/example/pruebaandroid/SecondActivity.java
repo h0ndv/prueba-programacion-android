@@ -17,6 +17,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import java.util.ArrayList;
 
+import com.example.pruebaandroid.Task;
+
 
 public class SecondActivity extends AppCompatActivity {
 
@@ -37,8 +39,6 @@ public class SecondActivity extends AppCompatActivity {
         });
 
         datos = new ArrayList<>();
-        datos.add("Tarea 1");
-        datos.add("Tarea 2");
 
         lista = findViewById(R.id.List);
         listaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, datos);
@@ -52,15 +52,35 @@ public class SecondActivity extends AppCompatActivity {
         Button addTask = findViewById(R.id.btnAddTask);
         addTask.setOnClickListener(v -> {
             EditText newTask = findViewById(R.id.txtNombreTarea);
-            String task = newTask.getText().toString().trim();
+            EditText newDesc = findViewById(R.id.txtDescripcion);
 
+            // Obtener texto de los EditText
+            String task = newTask.getText().toString().trim();
+            String desc = newDesc.getText().toString().trim();
+
+            // Validar que los campos no esten vacios
             if (task.isEmpty()) {
                 Toast.makeText(SecondActivity.this, "No puedes agregar una tarea vacia", Toast.LENGTH_LONG).show();
                 return;
             }
 
-            listaAdapter.add(task);
+            if (desc.isEmpty()) {
+                Toast.makeText(SecondActivity.this, "No puedes agregar una descripcion vacia", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            // Crear objeto Task
+            Task nuevaTask = new Task();
+            nuevaTask.setIdTask(datos.size() + 1);
+            nuevaTask.setNombreTask(task);
+            nuevaTask.setDescripcion(desc);
+
+            // Agregar tarea a la lista
+            listaAdapter.add(nuevaTask.getIdTask() + ". " + nuevaTask.getNombreTask() + ": " + nuevaTask.getDescripcion());
+
+            // Limpiar campos de texto
             newTask.setText("");
+            newDesc.setText("");
             Toast.makeText(SecondActivity.this, "Tarea agregada", Toast.LENGTH_SHORT).show();
         });
     }
