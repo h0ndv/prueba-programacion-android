@@ -1,8 +1,9 @@
 package com.example.pruebaandroid;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,15 +18,38 @@ import androidx.core.view.WindowInsetsCompat;
 
 import java.util.ArrayList;
 
-import com.example.pruebaandroid.Task;
-
-
 public class SecondActivity extends AppCompatActivity {
 
     ListView lista;
     ArrayList<String> datos;
+    ArrayList<Task> tasks;
     ArrayAdapter<String> listaAdapter;
     int selectedPosition = -1;
+
+    // 2. Carga las tareas desde la base de datos
+    private void loadTasksFromDb() {
+        if (datos == null) datos = new ArrayList<>();
+        datos.clear();
+
+        try (SQLiteDatabase db = openOrCreateDatabase("TaskDB", MODE_PRIVATE, null);
+                Cursor cursor = db.rawQuery("SELECT idTask, name, description FROM tasks ORDER BY idTask ASC", null)) {
+
+            if (cursor.moveToFirst()) {
+                do {
+                    int id = cursor.getInt(cursor.getColumnIndexOrThrow("idTask"));
+                    String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                    String desc = cursor.getString(cursor.getColumnIndexOrThrow("description"));
+                    datos.add(id + ". " + name + ": " + desc);
+                } while (cursor.moveToNext());
+            }
+
+            if (listaAdapter != null)
+                listaAdapter.notifyDataSetChanged();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,11 +63,24 @@ public class SecondActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Crear o abrir la base de datos y crear la tabla si no existe
+        SQLiteDatabase db = openOrCreateDatabase("TaskDB", MODE_PRIVATE, null);
+        String createTable = "CREATE TABLE IF NOT EXISTS tasks (" +
+                "idTask INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "name TEXT, " +
+                "description TEXT" +
+                ");";
+        db.execSQL(createTable);
+        db.close();
+
         datos = new ArrayList<>();
 
         lista = findViewById(R.id.List);
         listaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, datos);
         lista.setAdapter(listaAdapter);
+
+        // 2. Cargar datos desde la base de datos SQLite y mostrar en el ListView
+        loadTasksFromDb();
 
         lista.setOnItemClickListener((parent, view, position, id) -> {
             selectedPosition = position;
@@ -51,6 +88,7 @@ public class SecondActivity extends AppCompatActivity {
             Toast.makeText(SecondActivity.this, "Tarea seleccionada: " + tareaActual, Toast.LENGTH_SHORT).show();
         });
 
+        // Agregar tarea
         Button addTask = findViewById(R.id.btnAddTask);
         addTask.setOnClickListener(v -> {
             EditText newTask = findViewById(R.id.txtNombreTarea);
@@ -62,25 +100,34 @@ public class SecondActivity extends AppCompatActivity {
 
             // Validar que los campos no esten vacios
             if (task.isEmpty()) {
-                Toast.makeText(SecondActivity.this, "No puedes agregar una tarea vacia", Toast.LENGTH_LONG).show();
+                Toast.makeText(SecondActivity.this, "No puedes agregar una tarea vacia", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (desc.isEmpty()) {
-                Toast.makeText(SecondActivity.this, "No puedes agregar una descripcion vacia", Toast.LENGTH_LONG).show();
+                Toast.makeText(SecondActivity.this, "No puedes agregar una descripcion vacia", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Crear objeto Task
-            Task nuevaTask = new Task();
-            nuevaTask.setIdTask(datos.size() + 1);
-            nuevaTask.setNombreTask(task);
-            nuevaTask.setDescripcion(desc);
+            SQLiteDatabase dbInsert = openOrCreateDatabase("TaskDB", MODE_PRIVATE, null);
+            if (dbInsert == null) {
+                System.out.println("Error al abrir la base de datos");
+                return;
+            }
 
-            // Agregar tarea a la lista
-            listaAdapter.add(nuevaTask.getIdTask() + ". " + nuevaTask.getNombreTask() + ": " + nuevaTask.getDescripcion());
+            // Agregar la tarea a la base de datos
+            String sql = "INSERT INTO tasks (name, description) VALUES (?, ?)";
+            SQLiteStatement stm = dbInsert.compileStatement(sql);
+            stm.bindString(1, task);
+            stm.bindString(2, desc);
+            
+            int newId = (int) stm.executeInsert();
+            dbInsert.close();
 
-            // Limpiar campos de texto
+            datos.add(newId + ". " + task + ": " + desc);
+            listaAdapter.notifyDataSetChanged();
+
+            // Limpiar los campos de texto
             newTask.setText("");
             newDesc.setText("");
             Toast.makeText(SecondActivity.this, "Tarea agregada", Toast.LENGTH_SHORT).show();
@@ -90,6 +137,7 @@ public class SecondActivity extends AppCompatActivity {
         Button deleteTask = findViewById(R.id.btnEliminar);
         deleteTask.setOnClickListener(v -> {
 
+            // Validar que haya una tarea seleccionada
             if (selectedPosition == -1) {
                 Toast.makeText(SecondActivity.this, "No hay tarea seleccionada", Toast.LENGTH_SHORT).show();
                 return;
@@ -101,6 +149,7 @@ public class SecondActivity extends AppCompatActivity {
                 return;
             }
 
+            // Eliminar tarea de la lista
             datos.remove(selectedPosition);
             listaAdapter.notifyDataSetChanged();
             selectedPosition = -1;
