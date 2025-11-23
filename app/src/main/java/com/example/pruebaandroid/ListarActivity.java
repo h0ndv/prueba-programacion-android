@@ -1,5 +1,6 @@
 package com.example.pruebaandroid;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
@@ -91,6 +92,11 @@ public class ListarActivity extends AppCompatActivity {
         // Agregar tarea
         Button addTask = findViewById(R.id.btnAddTask);
         addTask.setOnClickListener(v -> {
+            // Redirecionar a AgregarActivity
+            Intent intent = new Intent(ListarActivity.this, AgregarActivity.class);
+            startActivity(intent);
+
+            /* 
             EditText newTask = findViewById(R.id.txtNombreTarea);
             EditText newDesc = findViewById(R.id.txtDescripcion);
 
@@ -131,6 +137,7 @@ public class ListarActivity extends AppCompatActivity {
             newTask.setText("");
             newDesc.setText("");
             Toast.makeText(ListarActivity.this, "Tarea agregada", Toast.LENGTH_SHORT).show();
+            */
         });
 
         // Eliminar tarea

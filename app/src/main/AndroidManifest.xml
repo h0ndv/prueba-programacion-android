@@ -13,6 +13,12 @@
         android:theme="@style/Theme.PruebaAndroid"
         tools:targetApi="31">
         <activity
+            android:name=".VerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AgregarActivity"
+            android:exported="false" />
+        <activity
             android:name=".ListarActivity"
             android:exported="false" />
         <activity
