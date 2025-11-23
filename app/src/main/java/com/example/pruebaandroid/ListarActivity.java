@@ -18,7 +18,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import java.util.ArrayList;
 
-public class SecondActivity extends AppCompatActivity {
+public class ListarActivity extends AppCompatActivity {
 
     ListView lista;
     ArrayList<String> datos;
@@ -85,7 +85,7 @@ public class SecondActivity extends AppCompatActivity {
         lista.setOnItemClickListener((parent, view, position, id) -> {
             selectedPosition = position;
             String tareaActual = datos.get(position);
-            Toast.makeText(SecondActivity.this, "Tarea seleccionada: " + tareaActual, Toast.LENGTH_SHORT).show();
+            Toast.makeText(ListarActivity.this, "Tarea seleccionada: " + tareaActual, Toast.LENGTH_SHORT).show();
         });
 
         // Agregar tarea
@@ -100,12 +100,12 @@ public class SecondActivity extends AppCompatActivity {
 
             // Validar que los campos no esten vacios
             if (task.isEmpty()) {
-                Toast.makeText(SecondActivity.this, "No puedes agregar una tarea vacia", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ListarActivity.this, "No puedes agregar una tarea vacia", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (desc.isEmpty()) {
-                Toast.makeText(SecondActivity.this, "No puedes agregar una descripcion vacia", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ListarActivity.this, "No puedes agregar una descripcion vacia", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -130,7 +130,7 @@ public class SecondActivity extends AppCompatActivity {
             // Limpiar los campos de texto
             newTask.setText("");
             newDesc.setText("");
-            Toast.makeText(SecondActivity.this, "Tarea agregada", Toast.LENGTH_SHORT).show();
+            Toast.makeText(ListarActivity.this, "Tarea agregada", Toast.LENGTH_SHORT).show();
         });
 
         // Eliminar tarea
@@ -139,12 +139,12 @@ public class SecondActivity extends AppCompatActivity {
 
             // Validar que haya una tarea seleccionada
             if (selectedPosition == -1) {
-                Toast.makeText(SecondActivity.this, "No hay tarea seleccionada", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ListarActivity.this, "No hay tarea seleccionada", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (selectedPosition >= datos.size()) {
-                Toast.makeText(SecondActivity.this, "Posición inválida", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ListarActivity.this, "Posición inválida", Toast.LENGTH_SHORT).show();
                 selectedPosition = -1;
                 return;
             }
@@ -153,7 +153,7 @@ public class SecondActivity extends AppCompatActivity {
             datos.remove(selectedPosition);
             listaAdapter.notifyDataSetChanged();
             selectedPosition = -1;
-            Toast.makeText(SecondActivity.this, "Tarea eliminada", Toast.LENGTH_SHORT).show();
+            Toast.makeText(ListarActivity.this, "Tarea eliminada", Toast.LENGTH_SHORT).show();
         });
     }
 }
