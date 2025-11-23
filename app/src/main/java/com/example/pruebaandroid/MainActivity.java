@@ -23,8 +23,20 @@ public class MainActivity extends AppCompatActivity {
         btnIr.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, SecondActivity.class);
-                startActivity(intent);
+                // 1. Hilo de espera 5 segundos y redirigir a ListarActivity
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(5000);
+                        runOnUiThread(() -> {
+                            Intent intent = new Intent(MainActivity.this, ListarActivity.class);
+                            startActivity(intent);
+                            finish();
+                        });
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        System.out.println("Error en el hilo: " + e.getMessage());
+                    }
+                }).start();
             }
         });
 
@@ -33,7 +45,5 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-
     }
 }
