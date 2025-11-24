@@ -83,10 +83,25 @@ public class ListarActivity extends AppCompatActivity {
         // 2. Cargar datos desde la base de datos SQLite y mostrar en el ListView
         loadTasksFromDb();
 
+        // 4. Seleccionar tarea y redirigir a VerActivity
         lista.setOnItemClickListener((parent, view, position, id) -> {
             selectedPosition = position;
             String tareaActual = datos.get(position);
             Toast.makeText(ListarActivity.this, "Tarea seleccionada: " + tareaActual, Toast.LENGTH_SHORT).show();
+
+            // Obtener idTask de la tarea seleccionada y redirigir a VerActivity
+            int idTask = -1;
+            String tareaIdStr = tareaActual.split("\\.")[0].trim();
+            idTask = Integer.parseInt(tareaIdStr);
+
+            if (idTask == -1) {
+                Toast.makeText(ListarActivity.this, "No se pudo obtener el Id de la tarea", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Intent intent = new Intent(ListarActivity.this, VerActivity.class);
+            intent.putExtra("tareaId", idTask);
+            startActivity(intent);   
         });
 
         // Agregar tarea
