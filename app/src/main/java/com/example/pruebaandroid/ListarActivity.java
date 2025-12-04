@@ -1,13 +1,9 @@
 package com.example.pruebaandroid;
 
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -17,39 +13,49 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
 import java.util.ArrayList;
 
 public class ListarActivity extends AppCompatActivity {
 
     ListView lista;
     ArrayList<String> datos;
-    ArrayList<Task> tasks;
+    ArrayList<String> taskIds;
     ArrayAdapter<String> listaAdapter;
     int selectedPosition = -1;
 
-    // 2. Carga las tareas desde la base de datos
-    private void loadTasksFromDb() {
+    // 2. Carga las tareas desde Firebase Firestore
+    private void loadTasksFromFirebase() {
         if (datos == null) datos = new ArrayList<>();
+        if (taskIds == null) taskIds = new ArrayList<>();
         datos.clear();
+        taskIds.clear();
 
-        try (SQLiteDatabase db = openOrCreateDatabase("TaskDB", MODE_PRIVATE, null);
-                Cursor cursor = db.rawQuery("SELECT idTask, name, description FROM tasks ORDER BY idTask ASC", null)) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("tasks")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        String idTask = document.getString("idTask");
+                        String name = document.getString("name");
+                        String description = document.getString("description");
+                        
+                        if (idTask != null && name != null && description != null) {
+                            taskIds.add(idTask);
+                            datos.add(name + ": " + description);
+                        }
+                    }
 
-            if (cursor.moveToFirst()) {
-                do {
-                    int id = cursor.getInt(cursor.getColumnIndexOrThrow("idTask"));
-                    String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
-                    String desc = cursor.getString(cursor.getColumnIndexOrThrow("description"));
-                    datos.add(id + ". " + name + ": " + desc);
-                } while (cursor.moveToNext());
-            }
-
-            if (listaAdapter != null)
-                listaAdapter.notifyDataSetChanged();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                    if (listaAdapter != null) {
+                        listaAdapter.notifyDataSetChanged();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(ListarActivity.this, "Error al cargar tareas: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                });
     }
 
     @Override
@@ -64,24 +70,15 @@ public class ListarActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Crear o abrir la base de datos y crear la tabla si no existe
-        SQLiteDatabase db = openOrCreateDatabase("TaskDB", MODE_PRIVATE, null);
-        String createTable = "CREATE TABLE IF NOT EXISTS tasks (" +
-                "idTask INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "name TEXT, " +
-                "description TEXT" +
-                ");";
-        db.execSQL(createTable);
-        db.close();
-
         datos = new ArrayList<>();
+        taskIds = new ArrayList<>();
 
         lista = findViewById(R.id.List);
         listaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, datos);
         lista.setAdapter(listaAdapter);
 
-        // 2. Cargar datos desde la base de datos SQLite y mostrar en el ListView
-        loadTasksFromDb();
+        // 2. Cargar datos desde Firebase Firestore y mostrar en el ListView
+        loadTasksFromFirebase();
 
         // 4. Seleccionar tarea y redirigir a VerActivity
         lista.setOnItemClickListener((parent, view, position, id) -> {
@@ -89,15 +86,13 @@ public class ListarActivity extends AppCompatActivity {
             String tareaActual = datos.get(position);
             Toast.makeText(ListarActivity.this, "Tarea seleccionada: " + tareaActual, Toast.LENGTH_SHORT).show();
 
-            // Obtener idTask de la tarea seleccionada y redirigir a VerActivity
-            int idTask = -1;
-            String tareaIdStr = tareaActual.split("\\.")[0].trim();
-            idTask = Integer.parseInt(tareaIdStr);
-
-            if (idTask == -1) {
+            // Obtener idTask de Firebase de la tarea seleccionada
+            if (position >= taskIds.size()) {
                 Toast.makeText(ListarActivity.this, "No se pudo obtener el Id de la tarea", Toast.LENGTH_SHORT).show();
                 return;
             }
+
+            String idTask = taskIds.get(position);
 
             Intent intent = new Intent(ListarActivity.this, VerActivity.class);
             intent.putExtra("tareaId", idTask);
@@ -165,17 +160,32 @@ public class ListarActivity extends AppCompatActivity {
                 return;
             }
 
-            if (selectedPosition >= datos.size()) {
+            if (selectedPosition >= datos.size() || selectedPosition >= taskIds.size()) {
                 Toast.makeText(ListarActivity.this, "Posición inválida", Toast.LENGTH_SHORT).show();
                 selectedPosition = -1;
                 return;
             }
 
-            // Eliminar tarea de la lista
-            datos.remove(selectedPosition);
-            listaAdapter.notifyDataSetChanged();
-            selectedPosition = -1;
-            Toast.makeText(ListarActivity.this, "Tarea eliminada", Toast.LENGTH_SHORT).show();
+            // Obtener el ID de la tarea a eliminar
+            String taskIdToDelete = taskIds.get(selectedPosition);
+            int positionToDelete = selectedPosition;
+
+            // Eliminar tarea de Firebase Firestore
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            db.collection("tasks")
+                    .document(taskIdToDelete)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> {
+                        // Eliminar de las listas locales
+                        datos.remove(positionToDelete);
+                        taskIds.remove(positionToDelete);
+                        listaAdapter.notifyDataSetChanged();
+                        selectedPosition = -1;
+                        Toast.makeText(ListarActivity.this, "Tarea eliminada", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(ListarActivity.this, "Error al eliminar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
         });
     }
 }
