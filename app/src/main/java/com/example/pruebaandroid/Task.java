@@ -1,19 +1,19 @@
 package com.example.pruebaandroid;
 
 public class Task {
-    int idTask;
+    String idTask;
     String nombreTask;
     String descripcion;
 
     public Task() {}
 
-    public Task(int idTask, String nombreTask, String descripcion) {
+    public Task(String idTask, String nombreTask, String descripcion) {
         this.idTask = idTask;
         this.nombreTask = nombreTask;
         this.descripcion = descripcion;
     }
 
-    public int getIdTask() {
+    public String getIdTask() {
         return idTask;
     }
 
@@ -24,7 +24,7 @@ public class Task {
         return descripcion;
     }
 
-    public void setIdTask(int idTask) {
+    public void setIdTask(String idTask) {
         this.idTask = idTask;
     }
 

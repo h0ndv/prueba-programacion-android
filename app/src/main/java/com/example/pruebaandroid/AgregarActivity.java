@@ -15,6 +15,15 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+
+// Firebase Storage
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class AgregarActivity extends AppCompatActivity {
 
     @Override
@@ -59,12 +68,21 @@ public class AgregarActivity extends AppCompatActivity {
                 return;
             }
 
-            // Insertar la nueva tarea en la base de datos
-            String insertSql = "INSERT INTO tasks (name, description) VALUES (?, ?);";
-            SQLiteStatement stm = db.compileStatement(insertSql);
-            stm.bindString(1, task);
-            stm.bindString(2, desc);
-            db.close();
+
+            // Insertar la nueva tarea en Firebase Storage
+            FirebaseFirestore dbFirestore = FirebaseFirestore.getInstance();
+            CollectionReference tasks = dbFirestore.collection("tasks");
+            DocumentReference taskRef = tasks.document();
+            String idTask = taskRef.getId();
+            
+            // Generar objeto con los datos de la tarea
+            Map<String, Object> taskData = new HashMap<>();
+            taskData.put("idTask", idTask);
+            taskData.put("name", task);
+            taskData.put("description", desc);
+
+            // Insertar la tarea en Firebase Storage
+            taskRef.set(taskData);
             Toast.makeText(AgregarActivity.this, "Tarea agregada", Toast.LENGTH_SHORT).show();
 
             // Redireccionar a ListarActivity
