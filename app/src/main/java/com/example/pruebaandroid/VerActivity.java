@@ -1,10 +1,6 @@
 package com.example.pruebaandroid;
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
 import android.os.Bundle;
-import android.view.View;
 import android.content.Intent;
 import android.widget.TextView;
 import android.widget.EditText;
@@ -16,6 +12,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class VerActivity extends AppCompatActivity {
 
@@ -31,24 +32,12 @@ public class VerActivity extends AppCompatActivity {
         });
 
         // Obtener el idTask pasado desde ListarActivity
-        int tareaId = getIntent().getIntExtra("tareaId", -1);
-        if (tareaId == -1) {
+        String tareaId = getIntent().getStringExtra("tareaId");
+        if (tareaId == null || tareaId.isEmpty()) {
             Toast.makeText(this, "Tarea no encontrada", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
-
-        // Conexion a base de datos
-        SQLiteDatabase db = openOrCreateDatabase("TaskDB", MODE_PRIVATE, null);
-        String createTable = "CREATE TABLE IF NOT EXISTS tasks (" +
-                "idTask INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "name TEXT, " +
-                "description TEXT" +
-                ");";
-        db.execSQL(createTable);
-
-        // Ejecutar consulta para obtener los detalles de la tarea por id
-        final Cursor cursor = db.rawQuery("SELECT idTask, name, description FROM tasks WHERE idTask = ?", new String[]{String.valueOf(tareaId)});
 
         // Objeto Task para almacenar los detalles de la tarea
         Task task = new Task();
@@ -70,50 +59,82 @@ public class VerActivity extends AppCompatActivity {
         EditText inputTarea = findViewById(R.id.txtTarea);
         EditText inputDesc = findViewById(R.id.txtDescripcion);
 
-        txtTitulo.setText("Editar Estudiante #" + task.getIdTask());
-        inputTarea.setText(task.getNombreTask());
-        inputDesc.setText(task.getDescripcion());
+        // Conexion a Firebase Firestore
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        
+        // Obtener la tarea desde Firebase
+        db.collection("tasks")
+                .document(tareaId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        task.setIdTask(documentSnapshot.getString("idTask"));
+                        task.setNombreTask(documentSnapshot.getString("name"));
+                        task.setDescripcion(documentSnapshot.getString("description"));
+
+                        // Cargar los datos a los editText
+                        txtTitulo.setText("Editar Tarea");
+                        inputTarea.setText(task.getNombreTask());
+                        inputDesc.setText(task.getDescripcion());
+                    } else {
+                        Toast.makeText(this, "Tarea no encontrada", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error al cargar tarea: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    finish();
+                });
 
         // 5. Boton editar tarea
         Button btnEditar = findViewById(R.id.btnEdit);
         btnEditar.setOnClickListener(v -> {
             // Obtener los valores del input
-            EditText inputTarea2 = findViewById(R.id.txtTarea);
-            EditText inputDesc2 = findViewById(R.id.txtDescripcion);
-            String nuevoNombre = inputTarea2.getText().toString().trim();
-            String nuevaDesc = inputDesc2.getText().toString().trim();
+            String nuevoNombre = inputTarea.getText().toString().trim();
+            String nuevaDesc = inputDesc.getText().toString().trim();
 
-            // Actualizar la tarea en la base de datos
-            String sql = "UPDATE tasks SET name = ?, description = ? WHERE idTask = ?";
-            SQLiteStatement stm = db.compileStatement(sql);
-            stm.bindString(1, nuevoNombre);
-            stm.bindString(2, nuevaDesc);
-            stm.bindString(3, String.valueOf(task.getIdTask()));
-            stm.execute();
-            db.close();
+            // Validar que los campos no esten vacios
+            if (nuevoNombre.isEmpty() || nuevaDesc.isEmpty()) {
+                Toast.makeText(VerActivity.this, "Los campos no pueden estar vacios", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            // Redirigir a ListarActivity
-            Toast.makeText(VerActivity.this, "Tarea actualizada", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(VerActivity.this, ListarActivity.class);
-            startActivity(intent);
-            finish();
+            // Actualizar la tarea en Firebase Firestore
+            Map<String, Object> taskData = new HashMap<>();
+            taskData.put("idTask", task.getIdTask());
+            taskData.put("name", nuevoNombre);
+            taskData.put("description", nuevaDesc);
+
+            db.collection("tasks")
+                    .document(task.getIdTask())
+                    .set(taskData)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(VerActivity.this, "Tarea actualizada", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(VerActivity.this, ListarActivity.class);
+                        startActivity(intent);
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(VerActivity.this, "Error al actualizar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
         });
 
         // 6. Boton eliminar tarea
         Button btnEliminar = findViewById(R.id.btnDelete);
         btnEliminar.setOnClickListener(v -> {
-            // Eliminar la tarea de la base de datos
-            String sql = "DELETE FROM tasks WHERE idTask = ?";
-            SQLiteStatement stm = db.compileStatement(sql);
-            stm.bindString(1, String.valueOf(task.getIdTask()));
-            stm.execute();
-            db.close();
-
-            // Redirigir a ListarActivity
-            Toast.makeText(VerActivity.this, "Tarea" + task.getIdTask() + " eliminada", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(VerActivity.this, ListarActivity.class);
-            startActivity(intent);
-            finish();
+            // Eliminar la tarea de Firebase Firestore
+            db.collection("tasks")
+                    .document(task.getIdTask())
+                    .delete()
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(VerActivity.this, "Tarea eliminada", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(VerActivity.this, ListarActivity.class);
+                        startActivity(intent);
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(VerActivity.this, "Error al eliminar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
         });
     }
 }
